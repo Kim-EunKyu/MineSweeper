@@ -74,8 +74,57 @@ const reducer = (state, action) => {
       }
     case OPEN_CELL: {
       const tableData = [...state.tableData];
-      tableData[action.row] = [...state.tableData[action.row]];
-      tableData[action.row][action.cell] = CODE.OPENED;
+      let visited = new Array(tableData.length);
+      for (let i = 0; i < visited.length; i++) {
+        visited[i] = new Array(visited.length).fill(false);
+      }
+
+      const checkAround = (row, cell) => {
+        if (row < 0 || row >= tableData.length || cell < 0 || cell >= tableData.length) {
+          return;
+        }
+        if (visited[row][cell])
+          return;
+
+        let around = [];
+
+        if (tableData[row - 1]) {
+          around = around.concat(
+            tableData[row - 1][cell - 1],
+            tableData[row - 1][cell],
+            tableData[row - 1][cell + 1]
+          )
+        }
+        around = around.concat(
+          tableData[row][cell - 1],
+          tableData[row][cell + 1]
+        )
+        if (tableData[row + 1]) {
+          around = around.concat(
+            tableData[row + 1][cell - 1],
+            tableData[row + 1][cell],
+            tableData[row + 1][cell + 1]
+          )
+        }
+
+        const count = around.filter((v) => [CODE.MINE, CODE.FLAG_MINE, CODE.QUESTION_MINE].includes(v)).length;
+        tableData[row][cell] = count;
+        visited[row][cell] = true;
+
+        return count;
+      }
+
+      let queue = [[action.row, action.cell]];
+      while (queue.length !== 0) {
+        const [row, cell] = queue.shift();
+        console.log(row, cell)
+        const count = checkAround(row, cell)
+        if (count === 0) {
+          queue.push([row - 1, cell - 1], [row - 1, cell], [row - 1, cell + 1], [row, cell - 1]
+            , [row, cell + 1], [row + 1, cell - 1], [row + 1, cell], [row + 1, cell + 1])
+        }
+      }
+
       return {
         ...state,
         tableData,
